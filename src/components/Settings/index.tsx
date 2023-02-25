@@ -2,11 +2,12 @@ import { AppSettings } from "~/data/types"
 
 interface SettingsProps  {
   settings?: AppSettings;
+  onClear: () => void;
 }
 
-const Settings = ({settings}: SettingsProps) => {
+const Settings = ({settings, onClear}: SettingsProps) => {
   return (
-    <article>
+    <article className="border border-slate-400 p-4">
       <div>
         <h2>Settings</h2>
       </div>
@@ -17,6 +18,9 @@ const Settings = ({settings}: SettingsProps) => {
         <label htmlFor="auto-reorder">
           <input type='checkbox' name="auto-reorder" id="auto-reorder"/> Auto Reorder & Hide Columns
         </label>
+        <button className="bg-gray-200 text-slate-600 rounded-lg" type="button" onClick={onClear}>
+          Clear data
+        </button>
       </div>
     </article>
   )

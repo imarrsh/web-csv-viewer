@@ -11,38 +11,39 @@ import {
 import { useMemo } from "react";
 import { CsvRow } from "~/data/types";
 
-const generateColumnsFromCSV = (data: CsvRow[]): ColumnDef<CsvRow>[] => {
-  return data.map((row) => ({
-    accessorKey: "firstName",
-    id: "firstName",
-    header: "First Name",
+const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] => {
+  return columns.map((col) => ({
+    accessorKey: col,
+    id: col,
+    header: col,
     cell: (info) => info.getValue(),
-    footer: (props) => props.column.id,
+    // footer: (props) => props.column.id,
   }));
 };
 
 interface SheetProps {
   data: CsvRow[];
+  columns: string[]
 }
 
-const Sheet = ({ data }: SheetProps) => {
-  const columns = useMemo(() => generateColumnsFromCSV(data), [data]);
+const Sheet = ({ data, columns }: SheetProps) => {
+  const columns_ = useMemo(() => generateColumnsFromFieldList(columns), [columns]);
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns_,
     // state: {
     //   columnOrder,
     // },
     // onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
-    debugTable: true,
-    debugHeaders: true,
-    debugColumns: true,
+    // debugTable: true,
+    // debugHeaders: true,
+    // debugColumns: true,
   });
 
   return (
-    <table>
+    <table className="table-auto">
       <thead>
         {table.getHeaderGroups().map((hg) => (
           <tr key={hg.id}>
@@ -56,7 +57,7 @@ const Sheet = ({ data }: SheetProps) => {
       </thead>
       <tbody>
         {table.getCoreRowModel().rows.map(r => (
-          <tr key={r.id}>
+          <tr className="even:bg-gray-200" key={r.id}>
             {r.getVisibleCells().map(c => (
               <td key={c.id}>
                 {flexRender(c.column.columnDef.cell, c.getContext())}
