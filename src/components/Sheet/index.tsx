@@ -17,9 +17,10 @@ interface SheetProps {
 	columns: string[];
 	title?: string;
 	onClear?: () => void;
+	onDownload?: (data: CsvRow[]) => void;
 }
 
-const Sheet = ({ data, columns, title, onClear }: SheetProps) => {
+const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 	const columns_ = useMemo(() => generateColumnsFromFieldList(columns), [columns]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -38,15 +39,38 @@ const Sheet = ({ data, columns, title, onClear }: SheetProps) => {
 		// debugColumns: true,
 	});
 
+	const prepareDownload = () => {
+		const visibleColumns = table.getAllLeafColumns().filter((col) => col.getIsVisible());
+		const visibleData = table.getCoreRowModel().rows.reduce((rows, row) => {
+			const visibleCells = row.getAllCells().filter((cell) => visibleColumns.includes(cell.column));
+
+			const visibleDataForRow = visibleCells.reduce((newRow, cell) => {
+				return {
+					...newRow,
+					[cell.column.id]: cell.getValue(),
+				};
+			}, {} as CsvRow);
+
+			rows.push(visibleDataForRow);
+
+			return rows;
+		}, [] as CsvRow[]);
+
+		onDownload?.(visibleData);
+	};
+
 	return (
 		<>
 			<div className="flex items-center">
-				<button type="button" onClick={onClear}>
-					Clear
+				<button className="border bg-gray-300 rounded-md text-gray-700 py-2 px-3" type="button" onClick={onClear}>
+					🗑️ Clear
 				</button>
 				<div className="flex-grow" />
 				{title && <h2 className="text-center text-gray-400">{title}</h2>}
 				<div className="flex-grow" />
+				<button className="border bg-green-300 rounded-md text-green-700 py-2 px-3" onClick={prepareDownload}>
+					⬇ Download
+				</button>
 			</div>
 			<div className="flex overflow-x-scroll w-full">
 				<table className="table-auto">
