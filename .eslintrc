@@ -23,13 +23,23 @@
       "version": "detect"
     },
     "import/parsers": {
-      "@typescript-eslint/parser": [".ts", ".tsx"]
+      "@typescript-eslint/parser": [
+        ".ts",
+        ".tsx"
+      ]
     },
     // Tells eslint how to resolve imports
     "import/resolver": {
       "node": {
-        "paths": ["src"],
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+        "paths": [
+          "src"
+        ],
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx"
+        ]
       },
       "typescript": {
         // "alwaysTryTypes": true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
@@ -40,6 +50,7 @@
   },
   "rules": {
     // Add your own rules here to override ones from the extended configs.
-    "react/no-unescaped-entities": "off"
+    "react/no-unescaped-entities": "off",
+    "no-debugger": "warn"
   }
 }
