@@ -15,9 +15,11 @@ const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] =>
 interface SheetProps {
 	data: CsvRow[];
 	columns: string[];
+	title?: string;
+	onClear?: () => void;
 }
 
-const Sheet = ({ data, columns }: SheetProps) => {
+const Sheet = ({ data, columns, title, onClear }: SheetProps) => {
 	const columns_ = useMemo(() => generateColumnsFromFieldList(columns), [columns]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -37,44 +39,54 @@ const Sheet = ({ data, columns }: SheetProps) => {
 	});
 
 	return (
-		<div className="flex overflow-x-scroll w-full ">
-			<table className="table-auto">
-				<thead>
-					{table.getHeaderGroups().map((hg) => (
-						<tr key={hg.id}>
-							{hg.headers.map((h) => (
-								<th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
-							))}
-						</tr>
+		<>
+			<div className="flex items-center">
+				<button type="button" onClick={onClear}>
+					Clear
+				</button>
+				<div className="flex-grow" />
+				{title && <h2 className="text-center text-gray-400">{title}</h2>}
+				<div className="flex-grow" />
+			</div>
+			<div className="flex overflow-x-scroll w-full">
+				<table className="table-auto">
+					<thead>
+						{table.getHeaderGroups().map((hg) => (
+							<tr key={hg.id}>
+								{hg.headers.map((h) => (
+									<th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
+								))}
+							</tr>
+						))}
+					</thead>
+					<tbody>
+						{table.getCoreRowModel().rows.map((r) => (
+							<tr className="even:bg-gray-200" key={r.id}>
+								{r.getVisibleCells().map((c) => (
+									<td key={c.id}>{flexRender(c.column.columnDef.cell, c.getContext())}</td>
+								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
+				<aside className="flex-grow">
+					{table.getAllLeafColumns().map((col) => (
+						<div key={col.id} className="px-1">
+							<label>
+								<input
+									{...{
+										type: 'checkbox',
+										checked: col.getIsVisible(),
+										onChange: col.getToggleVisibilityHandler(),
+									}}
+								/>
+								{col.id}
+							</label>
+						</div>
 					))}
-				</thead>
-				<tbody>
-					{table.getCoreRowModel().rows.map((r) => (
-						<tr className="even:bg-gray-200" key={r.id}>
-							{r.getVisibleCells().map((c) => (
-								<td key={c.id}>{flexRender(c.column.columnDef.cell, c.getContext())}</td>
-							))}
-						</tr>
-					))}
-				</tbody>
-			</table>
-			<aside className="flex-grow">
-				{table.getAllLeafColumns().map((col) => (
-					<div key={col.id} className="px-1">
-						<label>
-							<input
-								{...{
-									type: 'checkbox',
-									checked: col.getIsVisible(),
-									onChange: col.getToggleVisibilityHandler(),
-								}}
-							/>
-							{col.id}
-						</label>
-					</div>
-				))}
-			</aside>
-		</div>
+				</aside>
+			</div>
+		</>
 	);
 };
 
