@@ -1,5 +1,17 @@
-import { ColumnDef, flexRender, getCoreRowModel, useReactTable, VisibilityState } from '@tanstack/react-table';
+import {
+	Column,
+	ColumnDef,
+	ColumnOrderState,
+	flexRender,
+	getCoreRowModel,
+	Header,
+	Table,
+	useReactTable,
+	VisibilityState,
+} from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { CsvRow } from '~/data/types';
 
 const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] => {
@@ -10,6 +22,52 @@ const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] =>
 		cell: (info) => info.getValue(),
 		// footer: (props) => props.column.id,
 	}));
+};
+
+const reorderColumn = (draggedColumnId: string, targetColumnId: string, columnOrder: string[]): ColumnOrderState => {
+	columnOrder.splice(
+		columnOrder.indexOf(targetColumnId),
+		0,
+		columnOrder.splice(columnOrder.indexOf(draggedColumnId), 1)[0] as string,
+	);
+	return [...columnOrder];
+};
+
+interface DraggableColumnHeaderProps {
+	header: Header<CsvRow, unknown>;
+	table: Table<CsvRow>;
+}
+
+const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) => {
+	const { getState, setColumnOrder } = table;
+	const { columnOrder } = getState();
+	const { column } = header;
+
+	const [, dropRef] = useDrop({
+		accept: 'column',
+		drop: (draggedColumn: Column<CsvRow>) => {
+			console.log(`drop`);
+			const newColumnOrder = reorderColumn(draggedColumn.id, column.id, columnOrder);
+			setColumnOrder(newColumnOrder);
+		},
+	});
+
+	const [{ isDragging }, dragRef, previewRef] = useDrag({
+		collect: (monitor) => ({
+			isDragging: monitor.isDragging(),
+		}),
+		item: () => column,
+		type: 'column',
+	});
+
+	return (
+		<th ref={dropRef} colSpan={header.colSpan} style={{ opacity: isDragging ? 0.5 : 1 }}>
+			<div className="flex gap-2" ref={previewRef}>
+				{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+				<button ref={dragRef}>🟰</button>
+			</div>
+		</th>
+	);
 };
 
 interface SheetProps {
@@ -23,16 +81,19 @@ interface SheetProps {
 const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 	const columns_ = useMemo(() => generateColumnsFromFieldList(columns), [columns]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(
+		columns.map((column) => column as string), //must start out with populated columnOrder so we can splice
+	);
 
 	const table = useReactTable({
 		data,
 		columns: columns_,
 		state: {
-			// columnOrder,
+			columnOrder,
 			columnVisibility,
 		},
 		onColumnVisibilityChange: setColumnVisibility,
-		// onColumnOrderChange: setColumnOrder,
+		onColumnOrderChange: setColumnOrder,
 		getCoreRowModel: getCoreRowModel(),
 		// debugTable: true,
 		// debugHeaders: true,
@@ -60,7 +121,7 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 	};
 
 	return (
-		<>
+		<DndProvider backend={HTML5Backend}>
 			<div className="flex items-center">
 				<button className="border bg-gray-300 rounded-md text-gray-700 py-2 px-3" type="button" onClick={onClear}>
 					🗑️ Clear
@@ -78,7 +139,7 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 						{table.getHeaderGroups().map((hg) => (
 							<tr key={hg.id}>
 								{hg.headers.map((h) => (
-									<th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
+									<DraggableColumnHeader key={h.id} header={h} table={table} />
 								))}
 							</tr>
 						))}
@@ -110,7 +171,7 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 					))}
 				</aside>
 			</div>
-		</>
+		</DndProvider>
 	);
 };
 
