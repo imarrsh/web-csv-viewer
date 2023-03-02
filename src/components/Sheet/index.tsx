@@ -46,7 +46,6 @@ const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) =>
 	const [, dropRef] = useDrop({
 		accept: 'column',
 		drop: (draggedColumn: Column<CsvRow>) => {
-			console.log(`drop`);
 			const newColumnOrder = reorderColumn(draggedColumn.id, column.id, columnOrder);
 			setColumnOrder(newColumnOrder);
 		},
@@ -62,7 +61,7 @@ const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) =>
 
 	return (
 		<th ref={dropRef} colSpan={header.colSpan} style={{ opacity: isDragging ? 0.5 : 1 }}>
-			<div className="flex gap-2" ref={previewRef}>
+			<div className="flex gap-2 p-2 whitespace-nowrap" ref={previewRef}>
 				{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
 				<button ref={dragRef}>🟰</button>
 			</div>
@@ -133,38 +132,37 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 					⬇ Download
 				</button>
 			</div>
-			<div className="flex overflow-x-scroll w-full">
-				<table className="table-auto">
-					<thead>
-						{table.getHeaderGroups().map((hg) => (
-							<tr key={hg.id}>
-								{hg.headers.map((h) => (
-									<DraggableColumnHeader key={h.id} header={h} table={table} />
-								))}
-							</tr>
-						))}
-					</thead>
-					<tbody>
-						{table.getCoreRowModel().rows.map((r) => (
-							<tr className="even:bg-gray-200" key={r.id}>
-								{r.getVisibleCells().map((c) => (
-									<td key={c.id}>{flexRender(c.column.columnDef.cell, c.getContext())}</td>
-								))}
-							</tr>
-						))}
-					</tbody>
-				</table>
+			<div className="flex w-full">
+				<div className="overflow-x-scroll">
+					<table className="table-auto">
+						<thead>
+							{table.getHeaderGroups().map((hg) => (
+								<tr key={hg.id}>
+									{hg.headers.map((h) => (
+										<DraggableColumnHeader key={h.id} header={h} table={table} />
+									))}
+								</tr>
+							))}
+						</thead>
+						<tbody>
+							{table.getCoreRowModel().rows.map((r) => (
+								<tr className="even:bg-gray-200" key={r.id}>
+									{r.getVisibleCells().map((c) => (
+										<td className="p-2 whitespace-nowrap max-w-md text-ellipsis truncate" key={c.id}>
+											{flexRender(c.column.columnDef.cell, c.getContext())}
+										</td>
+									))}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
 				<aside className="flex-grow">
+					<h3>Columns</h3>
 					{table.getAllLeafColumns().map((col) => (
 						<div key={col.id} className="px-1">
-							<label>
-								<input
-									{...{
-										type: 'checkbox',
-										checked: col.getIsVisible(),
-										onChange: col.getToggleVisibilityHandler(),
-									}}
-								/>
+							<label className="flex gap-2 items-start">
+								<input type="checkbox" checked={col.getIsVisible()} onChange={col.getToggleVisibilityHandler()} />
 								{col.id}
 							</label>
 						</div>
