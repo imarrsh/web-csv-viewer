@@ -1,3 +1,4 @@
+import { Popover } from '@headlessui/react';
 import {
 	Column,
 	ColumnDef,
@@ -12,6 +13,7 @@ import {
 import { useMemo, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import Icon from '~/components/Icon';
 import { CsvRow } from '~/data/types';
 
 const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] => {
@@ -122,15 +124,41 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="flex items-center">
-				<button className="border bg-gray-300 rounded-md text-gray-700 py-2 px-3" type="button" onClick={onClear}>
-					🗑️ Clear
+				<button
+					className="flex gap-2 border items-center border-gray-500 rounded-md text-gray-700 py-2 px-3"
+					type="button"
+					onClick={onClear}
+				>
+					<Icon className="text-gray-500" name="TrashIcon" variant="solid" /> Clear
 				</button>
 				<div className="flex-grow" />
 				{title && <h2 className="text-center text-gray-400">{title}</h2>}
 				<div className="flex-grow" />
-				<button className="border bg-green-300 rounded-md text-green-700 py-2 px-3" onClick={prepareDownload}>
-					⬇ Download
+				<button
+					className="flex gap-2 border items-center bg-green-300 rounded-md text-green-700 py-2 px-3"
+					onClick={prepareDownload}
+				>
+					<Icon className="text-green-700" name="ArrowDownTrayIcon" variant="solid" /> Download
 				</button>
+				<Popover className="relative">
+					<Popover.Button className="flex gap-2 items-center py-2 px-3 bg-slate-400 rounded-md">
+						<Icon className="text-gray-700" name="Cog6ToothIcon" variant="solid" />
+					</Popover.Button>
+
+					<Popover.Panel className="absolute right-0 top-10 z-10 bg-white p-2 rounded-md shadow-lg">
+						<h3 className="text-lg font-bold px-4">Columns</h3>
+						{table.getAllLeafColumns().map((col) => (
+							<label
+								key={col.id}
+								className="flex gap-2 py-2 px-3 hover:bg-gray-200 items-center whitespace-nowrap rounded"
+							>
+								<input type="checkbox" checked={col.getIsVisible()} onChange={col.getToggleVisibilityHandler()} />
+								{col.id}
+							</label>
+						))}
+					</Popover.Panel>
+				</Popover>
+				<button></button>
 			</div>
 			<div className="flex w-full">
 				<div className="overflow-x-scroll">
@@ -157,17 +185,6 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 						</tbody>
 					</table>
 				</div>
-				<aside className="flex-grow">
-					<h3>Columns</h3>
-					{table.getAllLeafColumns().map((col) => (
-						<div key={col.id} className="px-1">
-							<label className="flex gap-2 items-start">
-								<input type="checkbox" checked={col.getIsVisible()} onChange={col.getToggleVisibilityHandler()} />
-								{col.id}
-							</label>
-						</div>
-					))}
-				</aside>
 			</div>
 		</DndProvider>
 	);
