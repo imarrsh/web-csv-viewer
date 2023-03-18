@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Icon from '~/components/Icon';
-import { CsvRow } from '~/data/types';
+import { CsvRow } from '~/data/models/file';
 
 const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] => {
 	return columns.map((col) => ({
@@ -165,16 +165,19 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 					<table className="table-auto">
 						<thead>
 							{table.getHeaderGroups().map((hg) => (
-								<tr key={hg.id}>
+								<tr className="before:[content:'_']" key={hg.id}>
 									{hg.headers.map((h) => (
 										<DraggableColumnHeader key={h.id} header={h} table={table} />
 									))}
 								</tr>
 							))}
 						</thead>
-						<tbody>
-							{table.getCoreRowModel().rows.map((r) => (
+						<tbody className="[counter-reset:row-number]">
+							{table.getCoreRowModel().rows.map((r, i) => (
 								<tr className="even:bg-gray-200" key={r.id}>
+									<td className="px-2 text-gray-500 select-none">
+										<small className="select-none">{i + 1}</small>
+									</td>
 									{r.getVisibleCells().map((c) => (
 										<td className="p-2 whitespace-nowrap max-w-md text-ellipsis truncate" key={c.id}>
 											{flexRender(c.column.columnDef.cell, c.getContext())}

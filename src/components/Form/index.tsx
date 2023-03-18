@@ -52,18 +52,20 @@ const Form = ({ onSubmit }: FormProps) => {
 	};
 
 	return (
-		<form className="border border-slate-400 p-4" onSubmit={handleSubmit}>
-			<CsvInput onValueParsed={handleParsedResult} />
-			<Settings />
-			<div className="flex gap-4">
-				<button className="border border-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="reset">
-					Reset
-				</button>
-				<button className="bg-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="submit">
-					Process
-				</button>
-			</div>
-		</form>
+		<div className="flex justify-center">
+			<form className="border border-slate-400 p-4 w-[600px]" onSubmit={handleSubmit}>
+				<CsvInput onValueParsed={handleParsedResult} />
+				<Settings />
+				<div className="flex gap-4 justify-center pt-4">
+					<button className="border border-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="reset">
+						Reset
+					</button>
+					<button className="bg-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="submit">
+						Process
+					</button>
+				</div>
+			</form>
+		</div>
 	);
 };
 

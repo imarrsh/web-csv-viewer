@@ -1,14 +1,4 @@
-const getFileMetadata = (file: File) => {
-	const { name, size, lastModified, type } = file;
-	return {
-		name,
-		size,
-		lastModified,
-		type,
-	};
-};
-
-export type FileMeta = ReturnType<typeof getFileMetadata>;
+import { FileMeta, getFileMetadata } from '~/data/models/file';
 
 interface TextFileInputProps {
 	onChangeValue?: (changeResult: { value: string; meta?: FileMeta }) => void;

@@ -1,5 +1,6 @@
 import { parse, ParseResult } from 'papaparse';
-import TextFileInput, { FileMeta } from './TextFileInput';
+import { FileMeta } from '~/data/models/file';
+import TextFileInput from './TextFileInput';
 
 interface CsvInputProps {
 	onValueParsed?: (parseResult: ParseResult<unknown> & { fileMeta?: FileMeta }) => void;

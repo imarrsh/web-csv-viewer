@@ -1,9 +1,8 @@
 import { unparse } from 'papaparse';
 import { useState } from 'react';
 import Form, { SubmitData } from '~/components/Form';
-import { FileMeta } from '~/components/Form/TextFileInput';
 import Sheet from '~/components/Sheet';
-import { CsvRow } from '~/data/types';
+import { CsvRow, FileMeta } from '~/data/models/file';
 
 function download(filename: string, text: string) {
 	const element = document.createElement('a');
