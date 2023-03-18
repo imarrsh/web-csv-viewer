@@ -15,5 +15,5 @@ export type FileMeta = ReturnType<typeof getFileMetadata>;
 export type CsvFile = {
 	data: CsvRow[];
 	columns: string[];
-	file: FileMeta;
+	fileMeta?: FileMeta;
 };

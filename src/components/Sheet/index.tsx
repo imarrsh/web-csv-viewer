@@ -76,7 +76,7 @@ interface SheetProps {
 	columns: string[];
 	title?: string;
 	onClear?: () => void;
-	onDownload?: (data: CsvRow[]) => void;
+	onDownload?: (data: CsvRow[], fileName?: string) => void;
 }
 
 const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
@@ -118,7 +118,7 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 			return rows;
 		}, [] as CsvRow[]);
 
-		onDownload?.(visibleData);
+		onDownload?.(visibleData, title);
 	};
 
 	return (

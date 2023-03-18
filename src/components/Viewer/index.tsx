@@ -1,8 +1,10 @@
+import { Tab } from '@headlessui/react';
 import { unparse } from 'papaparse';
-import { useState } from 'react';
+import { v4 } from 'uuid';
 import Form, { SubmitData } from '~/components/Form';
 import Sheet from '~/components/Sheet';
-import { CsvRow, FileMeta } from '~/data/models/file';
+import { CsvRow } from '~/data/models/file';
+import { useBoundStore } from '~/data/state/store';
 
 function download(filename: string, text: string) {
 	const element = document.createElement('a');
@@ -17,35 +19,62 @@ function download(filename: string, text: string) {
 	document.body.removeChild(element);
 }
 
-const Viewer = () => {
-	const [data, setData] = useState<CsvRow[]>([]);
-	const [columns, setColumns] = useState<string[]>([]);
-	const [fileInfo, setFileInfo] = useState<FileMeta>();
+interface ViewerProps {
+	activeTabId: string;
+}
+
+const Viewer = ({ activeTabId }: ViewerProps) => {
+	const { files, setFile, linkFile, removeFile } = useBoundStore((state) => state);
+
+	const fileIds = Object.keys(files);
+	// const [data, setData] = useState<CsvRow[]>([]);
+	// const [columns, setColumns] = useState<string[]>([]);
+	// const [fileInfo, setFileInfo] = useState<FileMeta>();
 
 	const clearData = () => {
-		setData([]);
-		setColumns([]);
+		// setData([]);
+		// setColumns([]);
 	};
 
 	const handleSubmit = (data: SubmitData) => {
 		const { data: rows, fieldList, fileMeta } = data.csv;
-		setData(rows);
-		setColumns(fieldList);
-		setFileInfo(fileMeta);
+		const fileId = v4();
+		setFile(
+			{
+				data: rows,
+				columns: fieldList,
+				fileMeta,
+			},
+			fileId,
+		);
+		if (fileMeta) {
+			console.log('linking file');
+			linkFile(activeTabId, { ...fileMeta, fileId });
+		}
 	};
 
-	const handleDownload = (data: CsvRow[]) => {
+	const handleDownload = (data: CsvRow[], fileName?: string) => {
 		const csv = unparse(data);
-		download(fileInfo?.name ?? 'download.csv', csv);
+		download(fileName ?? 'download.csv', csv);
 	};
 
 	return (
 		<div>
-			{data && data.length > 0 && columns && columns.length > 0 ? (
-				<Sheet data={data} columns={columns} title={fileInfo?.name} onClear={clearData} onDownload={handleDownload} />
-			) : (
-				<Form onSubmit={handleSubmit} />
-			)}
+			<Tab.Panels>
+				<Tab.Panel>
+					{fileIds.length > 0 ? (
+						<Sheet
+							data={files[fileIds[0]].data}
+							columns={files[fileIds[0]].columns}
+							title={files[fileIds[0]].fileMeta?.name}
+							onClear={clearData}
+							onDownload={handleDownload}
+						/>
+					) : (
+						<Form onSubmit={handleSubmit} />
+					)}
+				</Tab.Panel>
+			</Tab.Panels>
 		</div>
 	);
 };

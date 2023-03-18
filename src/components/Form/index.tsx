@@ -1,9 +1,8 @@
 import { ParseResult } from 'papaparse';
 import { FormEvent, useState } from 'react';
-import { CsvRow } from '~/data/types';
+import { CsvRow, FileMeta } from '~/data/models/file';
 import CsvInput from './CsvInput';
 import Settings from './Settings';
-import { FileMeta } from './TextFileInput';
 
 export interface SubmitData {
 	csv: {
@@ -60,7 +59,11 @@ const Form = ({ onSubmit }: FormProps) => {
 					<button className="border border-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="reset">
 						Reset
 					</button>
-					<button className="bg-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="submit">
+					<button
+						className="bg-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center disabled:opacity-60"
+						type="submit"
+						disabled={!data.length}
+					>
 						Process
 					</button>
 				</div>
