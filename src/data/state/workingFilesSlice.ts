@@ -12,6 +12,7 @@ export const workingFilesSlice: StateCreator<WorkFilesSlice> = (set) => ({
 	files: {},
 	setFile: (file: CsvFile, id?: string) =>
 		set((state) => ({
+			...state,
 			files: {
 				...state.files,
 				[id ? id : v4()]: file,
@@ -21,6 +22,9 @@ export const workingFilesSlice: StateCreator<WorkFilesSlice> = (set) => ({
 		set((state) => {
 			const files = { ...state.files };
 			delete files[id];
-			return files;
+			return {
+				...state,
+				files,
+			};
 		}),
 });

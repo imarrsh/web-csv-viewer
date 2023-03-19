@@ -12,7 +12,6 @@ const TextFileInput = ({ onChangeValue }: TextFileInputProps) => {
 			// assume string for now, since we're working with csv
 			const csv = e.target?.result as string;
 			if (csv) {
-				console.log(file);
 				onChangeValue?.({ value: csv, meta: getFileMetadata(file) });
 			}
 		};

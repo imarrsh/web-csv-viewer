@@ -15,8 +15,11 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Icon from '~/components/Icon';
 import { CsvRow } from '~/data/models/file';
+import { tw } from '~/lib/utils/alias';
 
-const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] => {
+const generateColumnsFromFieldList = (
+	columns: string[],
+): ColumnDef<CsvRow>[] => {
 	return columns.map((col) => ({
 		accessorKey: col,
 		id: col,
@@ -26,7 +29,11 @@ const generateColumnsFromFieldList = (columns: string[]): ColumnDef<CsvRow>[] =>
 	}));
 };
 
-const reorderColumn = (draggedColumnId: string, targetColumnId: string, columnOrder: string[]): ColumnOrderState => {
+const reorderColumn = (
+	draggedColumnId: string,
+	targetColumnId: string,
+	columnOrder: string[],
+): ColumnOrderState => {
 	columnOrder.splice(
 		columnOrder.indexOf(targetColumnId),
 		0,
@@ -40,7 +47,10 @@ interface DraggableColumnHeaderProps {
 	table: Table<CsvRow>;
 }
 
-const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) => {
+const DraggableColumnHeader = ({
+	header,
+	table,
+}: DraggableColumnHeaderProps) => {
 	const { getState, setColumnOrder } = table;
 	const { columnOrder } = getState();
 	const { column } = header;
@@ -48,7 +58,11 @@ const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) =>
 	const [, dropRef] = useDrop({
 		accept: 'column',
 		drop: (draggedColumn: Column<CsvRow>) => {
-			const newColumnOrder = reorderColumn(draggedColumn.id, column.id, columnOrder);
+			const newColumnOrder = reorderColumn(
+				draggedColumn.id,
+				column.id,
+				columnOrder,
+			);
 			setColumnOrder(newColumnOrder);
 		},
 	});
@@ -62,9 +76,15 @@ const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) =>
 	});
 
 	return (
-		<th ref={dropRef} colSpan={header.colSpan} style={{ opacity: isDragging ? 0.5 : 1 }}>
+		<th
+			ref={dropRef}
+			colSpan={header.colSpan}
+			style={{ opacity: isDragging ? 0.5 : 1 }}
+		>
 			<div className="flex gap-2 p-2 whitespace-nowrap" ref={previewRef}>
-				{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+				{header.isPlaceholder
+					? null
+					: flexRender(header.column.columnDef.header, header.getContext())}
 				<button ref={dragRef}>🟰</button>
 			</div>
 		</th>
@@ -72,15 +92,26 @@ const DraggableColumnHeader = ({ header, table }: DraggableColumnHeaderProps) =>
 };
 
 interface SheetProps {
-	data: CsvRow[];
+	className?: string;
 	columns: string[];
-	title?: string;
+	data: CsvRow[];
 	onClear?: () => void;
 	onDownload?: (data: CsvRow[], fileName?: string) => void;
+	title?: string;
 }
 
-const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
-	const columns_ = useMemo(() => generateColumnsFromFieldList(columns), [columns]);
+const Sheet = ({
+	className,
+	data,
+	columns,
+	title,
+	onClear,
+	onDownload,
+}: SheetProps) => {
+	const columns_ = useMemo(
+		() => generateColumnsFromFieldList(columns),
+		[columns],
+	);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(
 		columns.map((column) => column as string), //must start out with populated columnOrder so we can splice
@@ -102,9 +133,14 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 	});
 
 	const prepareDownload = () => {
-		const visibleColumns = table.getAllLeafColumns().filter((col) => col.getIsVisible());
+		const visibleColumns = table
+			.getAllLeafColumns()
+			.filter((col) => col.getIsVisible());
+
 		const visibleData = table.getCoreRowModel().rows.reduce((rows, row) => {
-			const visibleCells = row.getAllCells().filter((cell) => visibleColumns.includes(cell.column));
+			const visibleCells = row
+				.getAllCells()
+				.filter((cell) => visibleColumns.includes(cell.column));
 
 			const visibleDataForRow = visibleCells.reduce((newRow, cell) => {
 				return {
@@ -123,26 +159,34 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 
 	return (
 		<DndProvider backend={HTML5Backend}>
-			<div className="flex items-center">
-				<button
+			<div className={tw('flex items-center', className)}>
+				{/* <button
 					className="flex gap-2 border items-center border-gray-500 rounded-md text-gray-700 py-2 px-3"
 					type="button"
 					onClick={onClear}
 				>
 					<Icon className="text-gray-500" name="TrashIcon" variant="solid" /> Clear
-				</button>
+				</button> */}
 				<div className="flex-grow" />
-				{title && <h2 className="text-center text-gray-400">{title}</h2>}
 				<div className="flex-grow" />
 				<button
 					className="flex gap-2 border items-center bg-green-300 rounded-md text-green-700 py-2 px-3"
 					onClick={prepareDownload}
 				>
-					<Icon className="text-green-700" name="ArrowDownTrayIcon" variant="solid" /> Download
+					<Icon
+						className="text-green-700"
+						name="ArrowDownTrayIcon"
+						variant="solid"
+					/>{' '}
+					Download
 				</button>
 				<Popover className="relative">
 					<Popover.Button className="flex gap-2 items-center py-2 px-3 bg-slate-400 rounded-md">
-						<Icon className="text-gray-700" name="Cog6ToothIcon" variant="solid" />
+						<Icon
+							className="text-gray-700"
+							name="Cog6ToothIcon"
+							variant="solid"
+						/>
 					</Popover.Button>
 
 					<Popover.Panel className="absolute right-0 top-10 z-10 bg-white p-2 rounded-md shadow-lg">
@@ -152,7 +196,11 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 								key={col.id}
 								className="flex gap-2 py-2 px-3 hover:bg-gray-200 items-center whitespace-nowrap rounded"
 							>
-								<input type="checkbox" checked={col.getIsVisible()} onChange={col.getToggleVisibilityHandler()} />
+								<input
+									type="checkbox"
+									checked={col.getIsVisible()}
+									onChange={col.getToggleVisibilityHandler()}
+								/>
 								{col.id}
 							</label>
 						))}
@@ -167,7 +215,11 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 							{table.getHeaderGroups().map((hg) => (
 								<tr className="before:[content:'_']" key={hg.id}>
 									{hg.headers.map((h) => (
-										<DraggableColumnHeader key={h.id} header={h} table={table} />
+										<DraggableColumnHeader
+											key={h.id}
+											header={h}
+											table={table}
+										/>
 									))}
 								</tr>
 							))}
@@ -179,7 +231,10 @@ const Sheet = ({ data, columns, title, onClear, onDownload }: SheetProps) => {
 										<small className="select-none">{i + 1}</small>
 									</td>
 									{r.getVisibleCells().map((c) => (
-										<td className="p-2 whitespace-nowrap max-w-md text-ellipsis truncate" key={c.id}>
+										<td
+											className="p-2 whitespace-nowrap max-w-md text-ellipsis truncate"
+											key={c.id}
+										>
 											{flexRender(c.column.columnDef.cell, c.getContext())}
 										</td>
 									))}

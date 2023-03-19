@@ -10,7 +10,7 @@ export interface ViewerSlice {
 	activeTabId: TabId;
 	createTab: () => void;
 	closeTab: (id: TabId) => void;
-	linkFile: (tabId: TabId, fileMeta: FileMetaWithId) => void;
+	setTabFile: (tabId: TabId, fileMeta: FileMetaWithId | null) => void;
 }
 
 const initialTabId = v4();
@@ -22,6 +22,7 @@ export const viewerSlice: StateCreator<ViewerSlice> = (set) => ({
 	activeTabId: initialTabId,
 	createTab: () =>
 		set((state) => ({
+			...state,
 			tabs: {
 				...state.tabs,
 				[v4()]: null,
@@ -31,12 +32,15 @@ export const viewerSlice: StateCreator<ViewerSlice> = (set) => ({
 		set((state) => {
 			const tabs = { ...state.tabs };
 			delete tabs[id];
-			return tabs;
-		}),
-	linkFile: (tabId, fileMeta) =>
-		set((state) => {
-			console.log({ state, tabId, fileMeta });
 			return {
+				...state,
+				tabs,
+			};
+		}),
+	setTabFile: (tabId, fileMeta) =>
+		set((state) => {
+			return {
+				...state,
 				tabs: {
 					...state.tabs,
 					[tabId]: fileMeta,
