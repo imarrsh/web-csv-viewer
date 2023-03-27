@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { StateCreator } from 'zustand';
-import { CsvFile } from '../models/file';
+import { CsvFile } from '../models/csv';
 
 export interface WorkFilesSlice {
 	files: Record<string, CsvFile>;
@@ -10,7 +10,7 @@ export interface WorkFilesSlice {
 
 export const workingFilesSlice: StateCreator<WorkFilesSlice> = (set) => ({
 	files: {},
-	setFile: (file: CsvFile, id?: string) =>
+	setFile: (file, id) =>
 		set((state) => ({
 			...state,
 			files: {
@@ -18,7 +18,7 @@ export const workingFilesSlice: StateCreator<WorkFilesSlice> = (set) => ({
 				[id ? id : v4()]: file,
 			},
 		})),
-	removeFile: (id: string) =>
+	removeFile: (id) =>
 		set((state) => {
 			const files = { ...state.files };
 			delete files[id];
