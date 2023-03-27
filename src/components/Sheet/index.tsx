@@ -7,6 +7,7 @@ import {
 	getCoreRowModel,
 	Header,
 	Table,
+	Updater,
 	useReactTable,
 	VisibilityState,
 } from '@tanstack/react-table';
@@ -14,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Icon from '~/components/Icon';
-import { CsvRow } from '~/data/models/file';
+import { CsvField, CsvRow } from '~/data/models/csv';
 import { tw } from '~/lib/utils/alias';
 
 const generateColumnsFromFieldList = (
@@ -24,7 +25,7 @@ const generateColumnsFromFieldList = (
 		accessorKey: col,
 		id: col,
 		header: col,
-		cell: (info) => info.getValue(),
+		cell: (info) => (info.getValue() as CsvField).value,
 		// footer: (props) => props.column.id,
 	}));
 };
@@ -96,6 +97,8 @@ interface SheetProps {
 	columns: string[];
 	data: CsvRow[];
 	onClear?: () => void;
+	onColumnOrderChange?: (state: string[]) => void;
+	onColumnVisibilityChange?: (state: Record<string, boolean>) => void;
 	onDownload?: (data: CsvRow[], fileName?: string) => void;
 	title?: string;
 }
@@ -106,6 +109,8 @@ const Sheet = ({
 	columns,
 	title,
 	onClear,
+	onColumnOrderChange,
+	onColumnVisibilityChange,
 	onDownload,
 }: SheetProps) => {
 	const columns_ = useMemo(
@@ -117,6 +122,20 @@ const Sheet = ({
 		columns.map((column) => column as string), //must start out with populated columnOrder so we can splice
 	);
 
+	const handleColumnVisibilityChange = (updater: Updater<VisibilityState>) => {
+		setColumnVisibility(updater);
+		// calling updater will give us the new value, but TS isn't happy about it
+		// @ts-expect-error
+		const value = updater();
+		onColumnVisibilityChange?.(value);
+	};
+
+	const handleColumnOrderChange = (state: Updater<ColumnOrderState>) => {
+		setColumnOrder(state);
+		// updater isn't a func here, just the array of columns
+		onColumnOrderChange?.(state as string[]);
+	};
+
 	const table = useReactTable({
 		data,
 		columns: columns_,
@@ -124,8 +143,8 @@ const Sheet = ({
 			columnOrder,
 			columnVisibility,
 		},
-		onColumnVisibilityChange: setColumnVisibility,
-		onColumnOrderChange: setColumnOrder,
+		onColumnVisibilityChange: handleColumnVisibilityChange,
+		onColumnOrderChange: handleColumnOrderChange,
 		getCoreRowModel: getCoreRowModel(),
 		// debugTable: true,
 		// debugHeaders: true,
@@ -142,9 +161,9 @@ const Sheet = ({
 				.getAllCells()
 				.filter((cell) => visibleColumns.includes(cell.column));
 
-			const visibleDataForRow = visibleCells.reduce((newRow, cell) => {
+			const visibleDataForRow = visibleCells.reduce((visibleCols, cell) => {
 				return {
-					...newRow,
+					...visibleCols,
 					[cell.column.id]: cell.getValue(),
 				};
 			}, {} as CsvRow);
@@ -189,12 +208,12 @@ const Sheet = ({
 						/>
 					</Popover.Button>
 
-					<Popover.Panel className="absolute right-0 top-10 z-10 bg-white p-2 rounded-md shadow-lg">
+					<Popover.Panel className="absolute right-0 top-10 z-10 bg-white dark:bg-slate-800 p-2 rounded-md shadow-lg">
 						<h3 className="text-lg font-bold px-4">Columns</h3>
 						{table.getAllLeafColumns().map((col) => (
 							<label
 								key={col.id}
-								className="flex gap-2 py-2 px-3 hover:bg-gray-200 items-center whitespace-nowrap rounded"
+								className="flex gap-2 py-2 px-3 hover:bg-gray-200 dark:hover:bg-slate-700 items-center whitespace-nowrap rounded"
 							>
 								<input
 									type="checkbox"
@@ -226,7 +245,10 @@ const Sheet = ({
 						</thead>
 						<tbody className="[counter-reset:row-number]">
 							{table.getCoreRowModel().rows.map((r, i) => (
-								<tr className="even:bg-gray-200" key={r.id}>
+								<tr
+									className="even:bg-gray-200 dark:even:bg-slate-700"
+									key={r.id}
+								>
 									<td className="px-2 text-gray-500 select-none">
 										<small className="select-none">{i + 1}</small>
 									</td>

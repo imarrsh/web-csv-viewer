@@ -8,6 +8,7 @@ const TextFileInput = ({ onChangeValue }: TextFileInputProps) => {
 	const handleReadText = (file: File) => {
 		const reader = new FileReader();
 
+		// set onload handler for when we read
 		reader.onload = (e) => {
 			// assume string for now, since we're working with csv
 			const csv = e.target?.result as string;
@@ -16,6 +17,7 @@ const TextFileInput = ({ onChangeValue }: TextFileInputProps) => {
 			}
 		};
 
+		// read file
 		reader.readAsText(file);
 	};
 

@@ -1,12 +1,12 @@
 import { ParseResult } from 'papaparse';
 import { FormEvent, useState } from 'react';
-import { CsvRow, FileMeta } from '~/data/models/file';
+import { CsvRowRaw } from '~/data/models/csv';
+import { FileMeta } from '~/data/models/file';
 import CsvInput from './CsvInput';
-import Settings from './Settings';
 
 export interface SubmitData {
 	csv: {
-		data: CsvRow[];
+		data: CsvRowRaw[];
 		fieldList: string[];
 		fileMeta?: FileMeta;
 	};
@@ -23,15 +23,17 @@ interface FormProps {
 }
 
 const Form = ({ onSubmit }: FormProps) => {
-	const [data, setData] = useState<CsvRow[]>([]);
+	const [data, setData] = useState<CsvRowRaw[]>([]);
 	const [fieldList, setFieldList] = useState<string[]>([]);
 	const [fileMeta, setFileMeta] = useState<FileMeta>();
 
-	const handleParsedResult = (result: ParseResult<unknown> & { fileMeta?: FileMeta }) => {
+	const handleParsedResult = (
+		result: ParseResult<unknown> & { fileMeta?: FileMeta },
+	) => {
 		if (result) {
 			const { data: rows, meta, fileMeta } = result;
 
-			setData(rows as CsvRow[]);
+			setData(rows as CsvRowRaw[]);
 			setFieldList(meta?.fields ?? []);
 			setFileMeta(fileMeta);
 		}
@@ -52,11 +54,17 @@ const Form = ({ onSubmit }: FormProps) => {
 
 	return (
 		<div className="flex justify-center">
-			<form className="border border-slate-400 p-4 w-[600px]" onSubmit={handleSubmit}>
+			<form
+				className="border border-slate-400 p-4 w-[600px]"
+				onSubmit={handleSubmit}
+			>
 				<CsvInput onValueParsed={handleParsedResult} />
-				<Settings />
+				{/* <Settings /> */}
 				<div className="flex gap-4 justify-center pt-4">
-					<button className="border border-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center" type="reset">
+					<button
+						className="border border-gray-200 text-slate-600 rounded-lg px-3 py-2 items-center"
+						type="reset"
+					>
 						Reset
 					</button>
 					<button

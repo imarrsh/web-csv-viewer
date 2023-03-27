@@ -4,10 +4,42 @@ import { Fragment } from 'react';
 import { v4 } from 'uuid';
 import Form, { SubmitData } from '~/components/Form';
 import Sheet from '~/components/Sheet';
-import { CsvRow } from '~/data/models/file';
+import { CsvRow, CsvRowRaw } from '~/data/models/csv';
 import { useBoundStore } from '~/data/state/store';
 import { tw } from '~/lib/utils/alias';
 import Icon from '../Icon';
+
+function createRowFieldFromProfile(
+	columnName: string,
+	value: string,
+	fieldData?: any,
+) {
+	return {};
+}
+
+function createRowFieldDefault(
+	columnName: string,
+	value: string,
+	ordinal: number,
+) {
+	return {
+		name: columnName,
+		ordinal,
+		originalValue: value,
+		value,
+		visible: true,
+	};
+}
+
+function processRawRow(data: CsvRowRaw) {
+	return Object.entries(data).reduce((row, entry, index) => {
+		const [key, value] = entry;
+		return {
+			...row,
+			[key]: createRowFieldDefault(key, value, index),
+		};
+	}, {} as CsvRow);
+}
 
 function download(filename: string, text: string) {
 	const element = document.createElement('a');
@@ -39,6 +71,7 @@ const Viewer = ({ className }: ViewerProps) => {
 		tabs,
 		createTab,
 	} = useBoundStore();
+
 	const fileIds = Object.keys(files);
 	console.log({ fileIds });
 
@@ -52,10 +85,17 @@ const Viewer = ({ className }: ViewerProps) => {
 
 	const handleSubmit = (data: SubmitData) => {
 		const { data: rows, fieldList, fileMeta } = data.csv;
+		// link the fieldList to a stored one?
+		// if we have a saved profile, use that
+		// otherwise assume it's rae
+
 		const fileId = v4();
+
+		const transformedRows = rows.map(processRawRow);
+
 		setFile(
 			{
-				data: rows,
+				data: transformedRows,
 				columns: fieldList,
 				fileMeta,
 			},
@@ -67,7 +107,17 @@ const Viewer = ({ className }: ViewerProps) => {
 	};
 
 	const handleDownload = (data: CsvRow[], fileName?: string) => {
-		const csv = unparse(data);
+		const processedRows = data.map((row) =>
+			Object.entries(row).reduce((row, keyAndData) => {
+				const [key, field] = keyAndData;
+				return {
+					...row,
+					[key]: field.value,
+				};
+			}, {}),
+		);
+
+		const csv = unparse(processedRows);
 		download(fileName ?? 'download.csv', csv);
 	};
 
@@ -89,7 +139,7 @@ const Viewer = ({ className }: ViewerProps) => {
 						)}
 					</Tab.Panel>
 				</Tab.Panels>
-				<Tab.List className="flex items-stretch backdrop-blur-3xl bg-opacity-80 bg-white border-t border-t-slate-700">
+				<Tab.List className="flex items-stretch backdrop-blur-3xl bg-opacity-80 bg-white dark:bg-slate-800 border-t border-t-slate-700">
 					{Object.entries(tabs).map((tabEntry) => {
 						const [tabId, fileMeta] = tabEntry;
 						const file = (!!fileMeta && files[fileMeta.fileId]) || undefined;
@@ -98,7 +148,7 @@ const Viewer = ({ className }: ViewerProps) => {
 								{({ selected }) => (
 									<div
 										className={tw(
-											'flex items-center text-gray-500 border-white border-b-2 border-r-2 border-r-indigo-500 hover:bg-slate-100',
+											'flex items-center text-gray-500 dark:text-white border-white border-b-2 border-r-2 border-r-indigo-500 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700',
 											selected && 'border-t-indigo-500',
 										)}
 									>
