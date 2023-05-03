@@ -1,5 +1,4 @@
 import { Tab } from '@headlessui/react';
-import { unparse } from 'papaparse';
 import { Fragment } from 'react';
 import { v4 } from 'uuid';
 import Form, { SubmitData } from '~/components/Form';
@@ -41,22 +40,6 @@ function processRawRow(data: CsvRowRaw) {
 	}, {} as CsvRow);
 }
 
-function download(filename: string, text: string) {
-	const element = document.createElement('a');
-	element.setAttribute(
-		'href',
-		'data:text/csv;charset=utf-8,' + encodeURIComponent(text),
-	);
-	element.setAttribute('download', filename);
-
-	element.style.display = 'none';
-	document.body.appendChild(element);
-
-	element.click();
-
-	document.body.removeChild(element);
-}
-
 interface ViewerProps {
 	className?: string;
 }
@@ -69,7 +52,7 @@ const Viewer = ({ className }: ViewerProps) => {
 		removeFile,
 		activeTabId,
 		tabs,
-		createTab,
+		setColumnOrder,
 	} = useBoundStore();
 
 	const fileIds = Object.keys(files);
@@ -96,7 +79,11 @@ const Viewer = ({ className }: ViewerProps) => {
 		setFile(
 			{
 				data: transformedRows,
-				columns: fieldList,
+				columns: fieldList.map((field, idx) => ({
+					name: field,
+					ordinal: idx,
+					visible: true,
+				})),
 				fileMeta,
 			},
 			fileId,
@@ -106,21 +93,6 @@ const Viewer = ({ className }: ViewerProps) => {
 		}
 	};
 
-	const handleDownload = (data: CsvRow[], fileName?: string) => {
-		const processedRows = data.map((row) =>
-			Object.entries(row).reduce((row, keyAndData) => {
-				const [key, field] = keyAndData;
-				return {
-					...row,
-					[key]: field.value,
-				};
-			}, {}),
-		);
-
-		const csv = unparse(processedRows);
-		download(fileName ?? 'download.csv', csv);
-	};
-
 	return (
 		<div className={tw('flex flex-col h-full', className)}>
 			<Tab.Group>
@@ -128,11 +100,11 @@ const Viewer = ({ className }: ViewerProps) => {
 					<Tab.Panel className="p-4">
 						{fileIds.length > 0 ? (
 							<Sheet
-								data={files[fileIds[0]].data}
-								columns={files[fileIds[0]].columns}
-								title={files[fileIds[0]].fileMeta?.name}
+								data={files[fileIds[0]]}
 								onClear={handleClearTabAndFile}
-								onDownload={handleDownload}
+								onColumnOrderChange={(columnOrderState) => {
+									setColumnOrder(fileIds[0], columnOrderState);
+								}}
 							/>
 						) : (
 							<Form onSubmit={handleSubmit} />
@@ -170,7 +142,9 @@ const Viewer = ({ className }: ViewerProps) => {
 					<button
 						type="button"
 						className="flex items-center px-4 py-2 border-r border-r-indigo-500 hover:bg-slate-100"
-						onClick={() => {}}
+						onClick={() => {
+							// todo: add new tab
+						}}
 					>
 						<Icon name="PlusIcon" />
 					</button>

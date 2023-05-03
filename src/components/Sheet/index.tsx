@@ -1,4 +1,3 @@
-import { Popover } from '@headlessui/react';
 import {
 	Column,
 	ColumnDef,
@@ -11,21 +10,21 @@ import {
 	useReactTable,
 	VisibilityState,
 } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import Icon from '~/components/Icon';
-import { CsvField, CsvRow } from '~/data/models/csv';
-import { tw } from '~/lib/utils/alias';
+import { CsvColumn, CsvField, CsvFile, CsvRow } from '~/data/models/csv';
 
 const generateColumnsFromFieldList = (
-	columns: string[],
+	columns: CsvColumn[],
 ): ColumnDef<CsvRow>[] => {
 	return columns.map((col) => ({
-		accessorKey: col,
-		id: col,
-		header: col,
-		cell: (info) => (info.getValue() as CsvField).value,
+		accessorKey: col.name,
+		id: col.name,
+		header: col.name,
+		cell: (info) => {
+			return (info.getValue() as CsvField).value;
+		},
 		// footer: (props) => props.column.id,
 	}));
 };
@@ -94,19 +93,18 @@ const DraggableColumnHeader = ({
 
 interface SheetProps {
 	className?: string;
-	columns: string[];
-	data: CsvRow[];
+	// columns: string[];
+	data: CsvFile;
 	onClear?: () => void;
 	onColumnOrderChange?: (state: string[]) => void;
-	onColumnVisibilityChange?: (state: Record<string, boolean>) => void;
+	onColumnVisibilityChange?: (state: VisibilityState) => void;
 	onDownload?: (data: CsvRow[], fileName?: string) => void;
 	title?: string;
 }
 
 const Sheet = ({
 	className,
-	data,
-	columns,
+	data: { data = [], columns = [] },
 	title,
 	onClear,
 	onColumnOrderChange,
@@ -118,14 +116,33 @@ const Sheet = ({
 		[columns],
 	);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+	const visibleCols = useMemo(
+		() =>
+			columns.reduce((acc, c) => {
+				return { ...acc, [c.name]: c.visible };
+			}, {} as VisibilityState),
+		[columns],
+	);
+
+	useEffect(() => {
+		setColumnVisibility(visibleCols);
+	}, [visibleCols]);
+
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(
-		columns.map((column) => column as string), //must start out with populated columnOrder so we can splice
+		columns
+			.slice()
+			.sort((colA, colB) => {
+				const result = colA.ordinal - colB.ordinal;
+				return result;
+			})
+			.map((col) => col.name), //must start out with populated columnOrder so we can splice
 	);
 
 	const handleColumnVisibilityChange = (updater: Updater<VisibilityState>) => {
 		setColumnVisibility(updater);
-		// calling updater will give us the new value, but TS isn't happy about it
-		// @ts-expect-error
+
+		// @ts-expect-error - calling updater will give us the new value, but TS isn't happy about it
 		const value = updater();
 		onColumnVisibilityChange?.(value);
 	};
@@ -151,82 +168,8 @@ const Sheet = ({
 		// debugColumns: true,
 	});
 
-	const prepareDownload = () => {
-		const visibleColumns = table
-			.getAllLeafColumns()
-			.filter((col) => col.getIsVisible());
-
-		const visibleData = table.getCoreRowModel().rows.reduce((rows, row) => {
-			const visibleCells = row
-				.getAllCells()
-				.filter((cell) => visibleColumns.includes(cell.column));
-
-			const visibleDataForRow = visibleCells.reduce((visibleCols, cell) => {
-				return {
-					...visibleCols,
-					[cell.column.id]: cell.getValue(),
-				};
-			}, {} as CsvRow);
-
-			rows.push(visibleDataForRow);
-
-			return rows;
-		}, [] as CsvRow[]);
-
-		onDownload?.(visibleData, title);
-	};
-
 	return (
 		<DndProvider backend={HTML5Backend}>
-			<div className={tw('flex items-center', className)}>
-				{/* <button
-					className="flex gap-2 border items-center border-gray-500 rounded-md text-gray-700 py-2 px-3"
-					type="button"
-					onClick={onClear}
-				>
-					<Icon className="text-gray-500" name="TrashIcon" variant="solid" /> Clear
-				</button> */}
-				<div className="flex-grow" />
-				<div className="flex-grow" />
-				<button
-					className="flex gap-2 border items-center bg-green-300 rounded-md text-green-700 py-2 px-3"
-					onClick={prepareDownload}
-				>
-					<Icon
-						className="text-green-700"
-						name="ArrowDownTrayIcon"
-						variant="solid"
-					/>{' '}
-					Download
-				</button>
-				<Popover className="relative">
-					<Popover.Button className="flex gap-2 items-center py-2 px-3 bg-slate-400 rounded-md">
-						<Icon
-							className="text-gray-700"
-							name="Cog6ToothIcon"
-							variant="solid"
-						/>
-					</Popover.Button>
-
-					<Popover.Panel className="absolute right-0 top-10 z-10 bg-white dark:bg-slate-800 p-2 rounded-md shadow-lg">
-						<h3 className="text-lg font-bold px-4">Columns</h3>
-						{table.getAllLeafColumns().map((col) => (
-							<label
-								key={col.id}
-								className="flex gap-2 py-2 px-3 hover:bg-gray-200 dark:hover:bg-slate-700 items-center whitespace-nowrap rounded"
-							>
-								<input
-									type="checkbox"
-									checked={col.getIsVisible()}
-									onChange={col.getToggleVisibilityHandler()}
-								/>
-								{col.id}
-							</label>
-						))}
-					</Popover.Panel>
-				</Popover>
-				<button></button>
-			</div>
 			<div className="flex w-full">
 				<div className="overflow-x-scroll">
 					<table className="table-auto">

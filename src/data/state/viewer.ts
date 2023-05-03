@@ -5,7 +5,7 @@ import { FileMeta } from '../models/file';
 type TabId = string;
 type FileMetaWithId = FileMeta & { fileId: string };
 
-export interface ViewerSlice {
+export interface ViewerSliceState {
 	tabs: Record<TabId, FileMetaWithId | null>;
 	activeTabId: TabId;
 	createTab: () => void;
@@ -15,36 +15,24 @@ export interface ViewerSlice {
 
 const initialTabId = v4();
 
-export const viewerSlice: StateCreator<ViewerSlice> = (set) => ({
+export const viewerSlice: StateCreator<
+	ViewerSliceState,
+	[['zustand/immer', never]]
+> = (set) => ({
 	tabs: {
 		[initialTabId]: null,
 	},
 	activeTabId: initialTabId,
 	createTab: () =>
-		set((state) => ({
-			...state,
-			tabs: {
-				...state.tabs,
-				[v4()]: null,
-			},
-		})),
+		set((state) => {
+			state.tabs[v4()] = null;
+		}),
 	closeTab: (id) =>
 		set((state) => {
-			const tabs = { ...state.tabs };
-			delete tabs[id];
-			return {
-				...state,
-				tabs,
-			};
+			delete state.tabs[id];
 		}),
 	setTabFile: (tabId, fileMeta) =>
 		set((state) => {
-			return {
-				...state,
-				tabs: {
-					...state.tabs,
-					[tabId]: fileMeta,
-				},
-			};
+			state.tabs[tabId] = fileMeta;
 		}),
 });

@@ -1,30 +1,64 @@
 import { v4 } from 'uuid';
 import { StateCreator } from 'zustand';
-import { CsvFile } from '../models/csv';
+import { CsvColumn, CsvFile } from '../models/csv';
 
-export interface WorkFilesSlice {
+interface WorkingFilesState {
 	files: Record<string, CsvFile>;
-	setFile: (file: CsvFile, id?: string) => void;
-	removeFile: (id: string) => void;
 }
 
-export const workingFilesSlice: StateCreator<WorkFilesSlice> = (set) => ({
+interface WorkingFilesActions {
+	setFile: (file: CsvFile, id?: string) => void;
+	removeFile: (id: string) => void;
+	setColumnVisibility: (
+		fileId: string,
+		column: string,
+		visible: boolean,
+	) => void;
+	setColumnOrder: (fileId: string, columnOrderState: string[]) => void;
+}
+
+export type WorkingFilesSlice = WorkingFilesState & WorkingFilesActions;
+
+export const workingFilesSlice: StateCreator<
+	WorkingFilesSlice,
+	[['zustand/immer', never]]
+> = (set) => ({
 	files: {},
 	setFile: (file, id) =>
-		set((state) => ({
-			...state,
-			files: {
-				...state.files,
-				[id ? id : v4()]: file,
-			},
-		})),
+		set((state) => {
+			state.files[id ? id : v4()] = file;
+		}),
 	removeFile: (id) =>
 		set((state) => {
-			const files = { ...state.files };
-			delete files[id];
-			return {
-				...state,
-				files,
-			};
+			delete state.files[id];
+		}),
+	setColumnVisibility: (fileId, column, visible) =>
+		set((state) => {
+			const file = state.files[fileId];
+			if (file) {
+				const col = file.columns.find((c) => c.name === column);
+				if (col) {
+					col.visible = visible;
+				}
+			}
+		}),
+	setColumnOrder: (fileId, columnOrderState) =>
+		set((state) => {
+			const file = state.files[fileId];
+			if (file) {
+				const newColumnOrder = columnOrderState.reduce(
+					(cols, colName, index) => {
+						let found = file.columns.find((c) => c.name === colName);
+						if (found) {
+							found = { ...found, ordinal: index };
+							cols.push(found);
+						}
+						return cols;
+					},
+					[] as CsvColumn[],
+				);
+
+				file.columns = newColumnOrder;
+			}
 		}),
 });

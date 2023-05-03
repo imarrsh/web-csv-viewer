@@ -1,13 +1,24 @@
-import { Menu, Transition } from '@headlessui/react';
+import { Menu, Popover, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import Icon from './components/Icon';
 import Viewer from './components/Viewer';
+import { prepareDownload, rowsToCsv } from './data/models/csv';
 import { useBoundStore } from './data/state/store';
+import { download } from './lib/utils/dom';
 
 function App() {
-	const { tabs, activeTabId } = useBoundStore();
+	const { tabs, activeTabId, files, setColumnVisibility } = useBoundStore();
 	const tabFile = tabs[activeTabId];
 	const tabHasFile = tabFile != null;
+	const activeFile = tabFile ? files[tabFile.fileId] : undefined;
+
+	const handleGetDownload = () => {
+		if (activeFile) {
+			const data = prepareDownload(activeFile);
+			const csv = rowsToCsv(data);
+			download(activeFile.fileMeta?.name ?? 'download.csv', csv);
+		}
+	};
 
 	return (
 		<div className="bg-white dark:bg-slate-800 dark:text-white flex flex-col h-screen">
@@ -94,7 +105,7 @@ function App() {
 							<button
 								type="button"
 								className="flex gap-2 border-0 items-center hover:bg-green-100 transition-colors rounded-md text-green-700 py-2 px-3"
-								// onClick={prepareDownload}
+								onClick={handleGetDownload}
 							>
 								<Icon
 									className="text-green-900"
@@ -102,17 +113,44 @@ function App() {
 									variant="solid"
 								/>
 							</button>
-							<button
-								type="button"
-								className="flex gap-2 border-0 items-center hover:bg-slate-100 transition-colors rounded-md text-slate-700 py-2 px-3"
-								// onClick={}
-							>
-								<Icon
-									className="text-slate-900"
-									name="AdjustmentsVerticalIcon"
-									variant="solid"
-								/>
-							</button>
+							<Popover className="relative">
+								<Popover.Button className="flex gap-2 items-center py-2 px-3 bg-slate-400 rounded-md">
+									<Icon
+										className="text-gray-700"
+										name="AdjustmentsVerticalIcon"
+										variant="solid"
+									/>
+								</Popover.Button>
+
+								<Popover.Panel className="absolute right-0 top-10 z-10 bg-white dark:bg-slate-700 p-2 rounded-md shadow-lg divide-y divide-slate-500">
+									<h3 className="text-lg font-bold px-4 py-2">Columns</h3>
+									<div>
+										{activeFile?.columns.map((col) => {
+											return (
+												<label
+													key={col.name}
+													className="flex gap-2 py-2 px-3 hover:bg-gray-200 dark:hover:bg-slate-500 items-center whitespace-nowrap rounded"
+												>
+													<input
+														type="checkbox"
+														checked={col.visible}
+														onChange={(e) => {
+															if (tabFile?.fileId) {
+																setColumnVisibility(
+																	tabFile?.fileId,
+																	col.name,
+																	e.currentTarget.checked,
+																);
+															}
+														}}
+													/>
+													{col.name}
+												</label>
+											);
+										})}
+									</div>
+								</Popover.Panel>
+							</Popover>
 						</div>
 						<div className="flex items-center gap-2 pl-2 border-slate-500">
 							<button

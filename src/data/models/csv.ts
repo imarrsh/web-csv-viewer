@@ -1,10 +1,15 @@
+import { unparse } from 'papaparse';
 import { FileMeta } from './file';
 
 export type CsvField = {
 	name: string;
-	ordinal: number;
 	originalValue: string;
 	value: unknown;
+};
+
+export type CsvColumn = {
+	name: string;
+	ordinal: number;
 	visible: boolean;
 };
 
@@ -22,7 +27,47 @@ export type CsvFile = {
 	/** Row data */
 	data: CsvRow[];
 	/** Column Names */
-	columns: string[];
+	columns: CsvColumn[];
 	/** Metadata about the uploaded file */
 	fileMeta?: FileMeta;
+};
+
+const getColumnIndex = (file: CsvFile) => {
+	return file.columns.reduce((columnMap, col) => {
+		const { visible, ordinal } = col;
+		columnMap[col.name] = { visible, ordinal };
+		return columnMap;
+	}, {} as Record<string, { visible: boolean; ordinal: number }>);
+};
+
+export const prepareDownload = (file: CsvFile) => {
+	const columnIndex = getColumnIndex(file);
+
+	return file.data.map((dataRow) => {
+		return Object.entries(dataRow)
+			.sort(([aName], [bName]) => {
+				return columnIndex[aName].ordinal - columnIndex[bName].ordinal;
+			})
+			.reduce((row, [colName, value]) => {
+				console.log({ colName });
+				if (columnIndex[colName].visible) {
+					row[colName] = value;
+				}
+				return row;
+			}, {} as CsvRow);
+	});
+};
+
+export const rowsToCsv = (data: CsvRow[]) => {
+	const processedRows = data.map((row) =>
+		Object.entries(row).reduce((row, keyAndData) => {
+			const [key, field] = keyAndData;
+			return {
+				...row,
+				[key]: field.value,
+			};
+		}, {}),
+	);
+
+	return unparse(processedRows);
 };

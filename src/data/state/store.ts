@@ -1,10 +1,9 @@
 import { create, StoreApi, UseBoundStore } from 'zustand';
-import { ViewerSlice, viewerSlice } from './viewer';
-import { WorkFilesSlice, workingFilesSlice } from './workingFilesSlice';
+import { immer } from 'zustand/middleware/immer';
+import { viewerSlice, ViewerSliceState } from './viewer';
+import { workingFilesSlice, WorkingFilesSlice } from './workingFilesSlice';
 
-type CombinedStore =
-	// CsvProfileSliceState &
-	WorkFilesSlice & ViewerSlice;
+type CombinedStore = WorkingFilesSlice & ViewerSliceState;
 
 type WithSelectors<S> = S extends { getState: () => infer T }
 	? S & { use: { [K in keyof T]: () => T[K] } }
@@ -22,8 +21,10 @@ export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
 	return store;
 };
 
-export const useBoundStore = create<CombinedStore>()((...a) => ({
-	// ...csvProfileSlice(...a),
-	...workingFilesSlice(...a),
-	...viewerSlice(...a),
-}));
+export const useBoundStore = create<CombinedStore>()(
+	immer((...a) => ({
+		// ...csvProfileSlice(...a),
+		...workingFilesSlice(...a),
+		...viewerSlice(...a),
+	})),
+);
