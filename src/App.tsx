@@ -1,5 +1,7 @@
 import { Menu, Popover, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Dialog from './components/Dialog';
+import { useDialog } from './components/Dialog/context';
 import Icon from './components/Icon';
 import Viewer from './components/Viewer';
 import { prepareDownload, rowsToCsv } from './data/models/csv';
@@ -11,6 +13,7 @@ function App() {
 	const tabFile = tabs[activeTabId];
 	const tabHasFile = tabFile != null;
 	const activeFile = tabFile ? files[tabFile.fileId] : undefined;
+	const { openDialog } = useDialog();
 
 	const handleGetDownload = () => {
 		if (activeFile) {
@@ -18,6 +21,14 @@ function App() {
 			const csv = rowsToCsv(data);
 			download(activeFile.fileMeta?.name ?? 'download.csv', csv);
 		}
+	};
+
+	const handleOpenSchemaDialog = (action: 'create' | 'edit' = 'create') => {
+		openDialog(
+			<Dialog>
+				<div>Hello</div>
+			</Dialog>,
+		);
 	};
 
 	return (
@@ -58,21 +69,23 @@ function App() {
 															} group flex w-full items-center rounded-md px-2 py-2 gap-2 text-sm`}
 														>
 															<Icon name="SparklesIcon" />
-															Apply Schema
+															Apply Schema Profile
 														</button>
 													)}
 												</Menu.Item>
 												<Menu.Item>
 													{({ active }) => (
 														<button
+															type="button"
 															className={`${
 																active
 																	? 'bg-slate-500 text-white'
 																	: 'text-gray-900 dark:text-white'
 															} group flex w-full items-center rounded-md px-2 py-2 gap-2 text-sm`}
+															onClick={() => handleOpenSchemaDialog()}
 														>
 															<Icon name="PlusCircleIcon" />
-															Create Schema
+															Create Schema Profile
 														</button>
 													)}
 												</Menu.Item>
