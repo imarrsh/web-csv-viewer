@@ -58,8 +58,8 @@ export const prepareDownload = (file: CsvFile) => {
 	});
 };
 
-export const rowsToCsv = (data: CsvRow[]) => {
-	const processedRows = data.map((row) =>
+const processRows = (rows: CsvRow[]) =>
+	rows.map((row) =>
 		Object.entries(row).reduce((row, keyAndData) => {
 			const [key, field] = keyAndData;
 			return {
@@ -69,5 +69,14 @@ export const rowsToCsv = (data: CsvRow[]) => {
 		}, {}),
 	);
 
+export const rowsToCsv = (data: CsvRow[]) => {
+	const processedRows = processRows(data);
+
 	return unparse(processedRows);
+};
+
+export const rowsToPasteable = (data: CsvRow[]) => {
+	const processedRows = processRows(data);
+
+	return unparse(processedRows, { delimiter: '\t' });
 };

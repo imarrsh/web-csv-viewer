@@ -56,7 +56,6 @@ const Viewer = ({ className }: ViewerProps) => {
 	} = useBoundStore();
 
 	const fileIds = Object.keys(files);
-	console.log({ fileIds });
 
 	const handleClearTabAndFile = () => {
 		const fileId = tabs[activeTabId]?.fileId;

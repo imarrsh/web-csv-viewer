@@ -1,12 +1,12 @@
 import { Menu, Popover, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import Dialog from './components/Dialog';
-import { useDialog } from './components/Dialog/context';
-import Icon from './components/Icon';
-import Viewer from './components/Viewer';
-import { prepareDownload, rowsToCsv } from './data/models/csv';
-import { useBoundStore } from './data/state/store';
-import { download } from './lib/utils/dom';
+import { useDialog } from '~/components/Dialog/context';
+import Icon from '~/components/Icon';
+import ProfileEditDialog from '~/components/ProfileEditDialog';
+import Viewer from '~/components/Viewer';
+import { useBoundStore } from '~/data/state/store';
+import { download } from '~/lib/utils/dom';
+import { prepareDownload, rowsToCsv, rowsToPasteable } from './data/models/csv';
 
 function App() {
 	const { tabs, activeTabId, files, setColumnVisibility } = useBoundStore();
@@ -23,12 +23,17 @@ function App() {
 		}
 	};
 
+	const handleSetClipboard = async () => {
+		if (activeFile) {
+			const data = prepareDownload(activeFile);
+			const text = rowsToPasteable(data);
+
+			await navigator.clipboard.writeText(text);
+		}
+	};
+
 	const handleOpenSchemaDialog = (action: 'create' | 'edit' = 'create') => {
-		openDialog(
-			<Dialog>
-				<div>Hello</div>
-			</Dialog>,
-		);
+		openDialog(<ProfileEditDialog action={action} />);
 	};
 
 	return (
@@ -115,6 +120,17 @@ function App() {
 					<div className="flex-grow" />
 					<div className="flex items-center divide-x">
 						<div className="flex items-center gap-2 pr-2">
+							<button
+								type="button"
+								className="flex gap-2 border-0 items-center hover:bg-green-100 transition-colors rounded-md text-green-700 py-2 px-3"
+								onClick={handleSetClipboard}
+							>
+								<Icon
+									className="text-green-900"
+									name="ClipboardDocumentCheckIcon"
+									variant="solid"
+								/>
+							</button>
 							<button
 								type="button"
 								className="flex gap-2 border-0 items-center hover:bg-green-100 transition-colors rounded-md text-green-700 py-2 px-3"
