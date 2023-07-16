@@ -18,15 +18,17 @@ import { CsvColumn, CsvField, CsvFile, CsvRow } from '~/data/models/csv';
 const generateColumnsFromFieldList = (
 	columns: CsvColumn[],
 ): ColumnDef<CsvRow>[] => {
-	return columns.map((col) => ({
-		accessorKey: col.name,
-		id: col.name,
-		header: col.name,
-		cell: (info) => {
-			return (info.getValue() as CsvField).value;
-		},
-		// footer: (props) => props.column.id,
-	}));
+	return columns.map((col) => {
+		return {
+			// use accessorFn since column headers can contain unscrupulous characters (dots, aka property accessors)
+			accessorFn: (data) => data[col.name],
+			id: col.name,
+			header: col.name,
+			cell: (info) => {
+				return (info.getValue() as CsvField)?.value;
+			},
+		};
+	});
 };
 
 const reorderColumn = (
