@@ -1,29 +1,28 @@
-import { v4 } from 'uuid';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import CsvProfile from '../models/csvProfile';
+import CsvProfile, { getSchemaHash } from '../models/csvProfile';
 import { createSelectors } from './store';
-
-export function createSchemaFingerprint(columns: string[]) {
-	return columns.join('+');
-}
 
 export interface CsvProfileSliceState {
 	profiles: Record<string, CsvProfile>;
-	setProfile: (profile: CsvProfile, id?: string) => void;
+	addProfile: (profile: CsvProfile, id?: string) => void;
 	removeProfile: (id: string) => void;
+	findProfileByHeaderSchema: (
+		schemaFingerprint: string,
+	) => CsvProfile | undefined;
+	findProfileById: (id: string) => CsvProfile | undefined;
 }
 
 export const useCsvProfileStore = create<CsvProfileSliceState>()(
 	persist(
 		(set, get) => ({
 			profiles: {},
-			setProfile: (profile, id) =>
+			addProfile: (profile, id) =>
 				set((state) => ({
 					...state,
 					profiles: {
 						...state.profiles,
-						[id ? id : v4()]: profile,
+						[id ? id : getSchemaHash(Object.keys(profile.schema))]: profile,
 					},
 				})),
 			removeProfile: (id) =>
@@ -36,12 +35,14 @@ export const useCsvProfileStore = create<CsvProfileSliceState>()(
 					};
 				}),
 			findProfileByHeaderSchema: (schemaFingerprint: string) => {
-				return Object.entries(get().profiles).find((profileEntry) => {
-					const [, profileData] = profileEntry;
-					const { schema } = profileData;
-					const fingerprint = createSchemaFingerprint(Object.keys(schema));
+				return Object.values(get().profiles).find((profileEntry) => {
+					const { schema } = profileEntry;
+					const fingerprint = getSchemaHash(Object.keys(schema));
 					return fingerprint === schemaFingerprint;
 				});
+			},
+			findProfileById: (id: string) => {
+				return get().profiles[id];
 			},
 		}),
 		{

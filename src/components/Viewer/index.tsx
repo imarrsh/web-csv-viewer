@@ -4,6 +4,11 @@ import { v4 } from 'uuid';
 import Form, { SubmitData } from '~/components/Form';
 import Sheet from '~/components/Sheet';
 import { CsvRow, CsvRowRaw } from '~/data/models/csv';
+import {
+	generateDefaultProfileSchema,
+	getSchemaHash,
+} from '~/data/models/csvProfile';
+import { useCsvProfileStore } from '~/data/state/csvProfileSlice';
 import { useBoundStore } from '~/data/state/store';
 import { tw } from '~/lib/utils/alias';
 import Icon from '../Icon';
@@ -55,6 +60,8 @@ const Viewer = ({ className }: ViewerProps) => {
 		setColumnOrder,
 	} = useBoundStore();
 
+	const { findProfileById, addProfile, profiles } = useCsvProfileStore();
+
 	const fileIds = Object.keys(files);
 
 	const handleClearTabAndFile = () => {
@@ -87,8 +94,23 @@ const Viewer = ({ className }: ViewerProps) => {
 			},
 			fileId,
 		);
+
 		if (activeTabId && fileMeta) {
 			setTabFile(activeTabId, { ...fileMeta, fileId });
+		}
+
+		// if not already loaded before, generate and save a profile with defaults
+		if (!findProfileById(getSchemaHash(fieldList))) {
+			const schema = generateDefaultProfileSchema(fieldList);
+			const profileCount = Object.keys(profiles).length;
+			const name =
+				fileMeta?.name ??
+				`Untitled Profile${profileCount === 0 ? ' 1' : ' ' + profileCount + 1}`;
+
+			addProfile({
+				schema,
+				name,
+			});
 		}
 	};
 
