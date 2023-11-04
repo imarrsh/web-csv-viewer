@@ -32,8 +32,13 @@ function App() {
 		}
 	};
 
-	const handleOpenSchemaDialog = (action: 'create' | 'edit' = 'create') => {
-		openDialog(<ProfileEditDialog action={action} />);
+	const handleOpenSchemaDialog = () => {
+		openDialog(
+			<ProfileEditDialog
+				action={activeFile ? 'edit' : 'create'}
+				columns={activeFile?.columns}
+			/>,
+		);
 	};
 
 	return (
@@ -90,7 +95,7 @@ function App() {
 															onClick={() => handleOpenSchemaDialog()}
 														>
 															<Icon name="PlusCircleIcon" />
-															Create Schema Profile
+															Edit Schema Profile
 														</button>
 													)}
 												</Menu.Item>

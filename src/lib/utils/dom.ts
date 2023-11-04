@@ -1,3 +1,9 @@
+/**
+ * Creates a temporary anchor link for downloading a file
+ *
+ * @param filename
+ * @param text
+ */
 export function download(filename: string, text: string) {
 	const element = document.createElement('a');
 	element.setAttribute(

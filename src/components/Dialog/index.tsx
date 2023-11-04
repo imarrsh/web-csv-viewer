@@ -1,13 +1,14 @@
 import { Dialog as HeadlessDialog, Transition } from '@headlessui/react';
 import { Fragment, ReactNode, useState } from 'react';
-import Icon from '../Icon';
+import Icon from '~/components/Icon';
 import { useDialog } from './context';
 
 interface DialogProps {
 	children: ReactNode;
+	title?: ReactNode;
 }
 
-const Dialog = ({ children }: DialogProps) => {
+const Dialog = ({ children, title }: DialogProps) => {
 	const [showing, setShowing] = useState(true);
 
 	const { closeDialog } = useDialog();
@@ -49,17 +50,28 @@ const Dialog = ({ children }: DialogProps) => {
 							>
 								<HeadlessDialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
 									<div className="flex justify-between">
-										<HeadlessDialog.Title
-											as="h3"
-											className="text-lg font-medium leading-6 text-gray-900"
+										{title && (
+											<HeadlessDialog.Title
+												as="h3"
+												className="text-lg font-medium leading-6 text-gray-900"
+											>
+												{title}
+											</HeadlessDialog.Title>
+										)}
+										<button
+											className="justify-self-end"
+											type="button"
+											onClick={handleClose}
 										>
-											Manage Profiles
-										</HeadlessDialog.Title>
-										<button type="button" onClick={handleClose}>
 											<Icon name="XMarkIcon" />
 										</button>
 									</div>
 									<div className="mt-2">{children}</div>
+									<div className="flex border-t">
+										<button className="bg-red-500" type="button">
+											Save
+										</button>
+									</div>
 								</HeadlessDialog.Panel>
 							</Transition.Child>
 						</div>
