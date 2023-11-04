@@ -1,7 +1,9 @@
 import { ParseResult } from 'papaparse';
 import { FormEvent, useState } from 'react';
 import { CsvRowRaw } from '~/data/models/csv';
+import { getSchemaHash } from '~/data/models/csvProfile';
 import { FileMeta } from '~/data/models/file';
+import { useCsvProfileStore } from '~/data/state/csvProfileSlice';
 import CsvInput from './CsvInput';
 
 export interface SubmitData {
@@ -26,17 +28,42 @@ const Form = ({ onSubmit }: FormProps) => {
 	const [data, setData] = useState<CsvRowRaw[]>([]);
 	const [fieldList, setFieldList] = useState<string[]>([]);
 	const [fileMeta, setFileMeta] = useState<FileMeta>();
+	const [profileName, setProfileName] = useState('');
+
+	const { findProfileById } = useCsvProfileStore();
 
 	const handleParsedResult = (
 		result: ParseResult<unknown> & { fileMeta?: FileMeta },
 	) => {
 		if (result) {
-			const { data: rows, meta, fileMeta } = result;
+			const {
+				data: rows,
+				meta: { fields },
+				fileMeta,
+			} = result;
 
 			setData(rows as CsvRowRaw[]);
-			setFieldList(meta?.fields ?? []);
+			setFieldList(fields ?? []);
 			setFileMeta(fileMeta);
+
+			if (fields?.length) {
+				const schemaId = getSchemaHash(fields);
+				const profile = findProfileById(schemaId);
+
+				if (profile) {
+					setProfileName(profile.name);
+				} else {
+					setProfileName('');
+				}
+			}
 		}
+	};
+
+	const handleClear = () => {
+		setData([]);
+		setFieldList([]);
+		setFileMeta(undefined);
+		setProfileName('');
 	};
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -57,8 +84,15 @@ const Form = ({ onSubmit }: FormProps) => {
 			<form
 				className="border border-slate-400 p-4 w-[600px]"
 				onSubmit={handleSubmit}
+				onReset={handleClear}
 			>
-				<CsvInput onValueParsed={handleParsedResult} />
+				<CsvInput
+					onValueCleared={handleClear}
+					onValueParsed={handleParsedResult}
+				/>
+				{profileName && (
+					<div className="text-sm">Found matching profile "{profileName}"</div>
+				)}
 				{/* <Settings /> */}
 				<div className="flex gap-4 justify-center pt-4">
 					<button

@@ -2,9 +2,10 @@ import { FileMeta, getFileMetadata } from '~/data/models/file';
 
 interface TextFileInputProps {
 	onChangeValue?: (changeResult: { value: string; meta?: FileMeta }) => void;
+	onClear?: () => void;
 }
 
-const TextFileInput = ({ onChangeValue }: TextFileInputProps) => {
+const TextFileInput = ({ onChangeValue, onClear }: TextFileInputProps) => {
 	const handleReadText = (file: File) => {
 		const reader = new FileReader();
 
@@ -35,6 +36,8 @@ const TextFileInput = ({ onChangeValue }: TextFileInputProps) => {
 					if (type === 'text/csv') {
 						handleReadText(file);
 					}
+				} else {
+					onClear?.();
 				}
 			}}
 		/>
