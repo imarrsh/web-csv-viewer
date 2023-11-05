@@ -1,5 +1,7 @@
 /**
- * Generates a hash from a given input
+ * Generates a simple hash from a given input
+ *
+ * {@link https://gist.github.com/jlevy/c246006675becc446360a798e2b2d781?permalink_comment_id=4738050#gistcomment-4738050}
  *
  * @param str
  * @returns
