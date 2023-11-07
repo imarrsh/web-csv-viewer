@@ -7,9 +7,12 @@ import Viewer from '~/components/Viewer';
 import { useBoundStore } from '~/data/state/store';
 import { download } from '~/lib/utils/dom';
 import { prepareDownload, rowsToCsv, rowsToPasteable } from './data/models/csv';
+import { getSchemaHash } from './data/models/csvProfile';
+import { useCsvProfileStore } from './data/state/csvProfileSlice';
 
 function App() {
 	const { tabs, activeTabId, files, setColumnVisibility } = useBoundStore();
+	const { updateProfileSchema, findProfileById } = useCsvProfileStore();
 	const tabFile = tabs[activeTabId];
 	const tabHasFile = tabFile != null;
 	const activeFile = tabFile ? files[tabFile.fileId] : undefined;
@@ -131,7 +134,7 @@ function App() {
 								onClick={handleSetClipboard}
 							>
 								<Icon
-									className="text-green-900"
+									className="text-gray-200"
 									name="ClipboardDocumentCheckIcon"
 									variant="solid"
 								/>
@@ -142,7 +145,7 @@ function App() {
 								onClick={handleGetDownload}
 							>
 								<Icon
-									className="text-green-900"
+									className="text-gray-200"
 									name="ArrowDownTrayIcon"
 									variant="solid"
 								/>
@@ -170,11 +173,24 @@ function App() {
 														checked={col.visible}
 														onChange={(e) => {
 															if (tabFile?.fileId) {
+																const visible = e.currentTarget.checked;
 																setColumnVisibility(
 																	tabFile?.fileId,
 																	col.name,
-																	e.currentTarget.checked,
+																	visible,
 																);
+																// perhaps we have a checkbox to 'remember' changes
+																const profileId = getSchemaHash(
+																	activeFile.columns.map((col) => col.name),
+																);
+																const profile = findProfileById(profileId);
+																if (profile) {
+																	updateProfileSchema(profileId, {
+																		[col.name]: {
+																			visible: visible,
+																		},
+																	});
+																}
 															}
 														}}
 													/>

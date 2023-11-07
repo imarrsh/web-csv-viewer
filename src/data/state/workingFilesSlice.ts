@@ -7,7 +7,7 @@ interface WorkingFilesState {
 }
 
 interface WorkingFilesActions {
-	setFile: (file: CsvFile, id?: string) => void;
+	setFile: (file: CsvFile, id?: string) => string;
 	removeFile: (id: string) => void;
 	setColumnVisibility: (
 		fileId: string,
@@ -24,10 +24,13 @@ export const workingFilesSlice: StateCreator<
 	[['zustand/immer', never]]
 > = (set) => ({
 	files: {},
-	setFile: (file, id) =>
+	setFile: (file, id) => {
+		const generatedId = id ?? v4();
 		set((state) => {
-			state.files[id ? id : v4()] = file;
-		}),
+			state.files[generatedId] = file;
+		});
+		return generatedId;
+	},
 	removeFile: (id) =>
 		set((state) => {
 			delete state.files[id];

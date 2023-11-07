@@ -13,34 +13,20 @@ import { useBoundStore } from '~/data/state/store';
 import { tw } from '~/lib/utils/alias';
 import Icon from '../Icon';
 
-function createRowFieldFromProfile(
-	columnName: string,
-	value: string,
-	fieldData?: any,
-) {
-	return {};
-}
-
-function createRowFieldDefault(
-	columnName: string,
-	value: string,
-	ordinal: number,
-) {
+function createRowFieldDefault(columnName: string, value: string) {
 	return {
 		name: columnName,
-		ordinal,
 		originalValue: value,
 		value,
-		visible: true,
 	};
 }
 
 function processRawRow(data: CsvRowRaw) {
-	return Object.entries(data).reduce((row, entry, index) => {
+	return Object.entries(data).reduce((row, entry) => {
 		const [key, value] = entry;
 		return {
 			...row,
-			[key]: createRowFieldDefault(key, value, index),
+			[key]: createRowFieldDefault(key, value),
 		};
 	}, {} as CsvRow);
 }
@@ -60,7 +46,8 @@ const Viewer = ({ className }: ViewerProps) => {
 		setColumnOrder,
 	} = useBoundStore();
 
-	const { findProfileById, addProfile, profiles } = useCsvProfileStore();
+	const { findProfileById, addProfile, profiles, updateProfileSchema } =
+		useCsvProfileStore();
 
 	const fileIds = Object.keys(files);
 
@@ -74,22 +61,31 @@ const Viewer = ({ className }: ViewerProps) => {
 
 	const handleSubmit = (data: SubmitData) => {
 		const { data: rows, fieldList, fileMeta } = data.csv;
-		// link the fieldList to a stored one?
-		// if we have a saved profile, use that
-		// otherwise assume it's rae
 
 		const fileId = v4();
 
 		const transformedRows = rows.map(processRawRow);
 
+		const profile = findProfileById(getSchemaHash(fieldList));
+
 		setFile(
 			{
 				data: transformedRows,
-				columns: fieldList.map((field, idx) => ({
-					name: field,
-					ordinal: idx,
-					visible: true,
-				})),
+				columns: fieldList.map((field, idx) => {
+					if (profile) {
+						const { ordinal, visible } = profile.schema[field];
+						return {
+							name: field,
+							ordinal,
+							visible,
+						};
+					}
+					return {
+						name: field,
+						ordinal: idx,
+						visible: true,
+					};
+				}),
 				fileMeta,
 			},
 			fileId,
@@ -125,6 +121,24 @@ const Viewer = ({ className }: ViewerProps) => {
 								onClear={handleClearTabAndFile}
 								onColumnOrderChange={(columnOrderState) => {
 									setColumnOrder(fileIds[0], columnOrderState);
+
+									const profileId = getSchemaHash(columnOrderState);
+									const profile = findProfileById(profileId);
+
+									if (profile) {
+										const schemaOrdinalUpdate = columnOrderState.reduce(
+											(state, column, idx) => {
+												return {
+													...state,
+													[column]: {
+														ordinal: idx,
+													},
+												};
+											},
+											{},
+										);
+										updateProfileSchema(profileId, schemaOrdinalUpdate);
+									}
 								}}
 							/>
 						) : (

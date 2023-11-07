@@ -8,9 +8,28 @@ interface SchemaColumnSettings extends CsvColumn {
 	// ? jsonLogic for transforms?
 }
 
+/**
+ * A schema follows this format:
+ *
+ * @example
+ * {
+ * 	['<column name>'] : { SchemaColumnSettings },
+ * }
+ */
+export type ProfileSchema = Record<string, SchemaColumnSettings>;
+
+/**
+ * A CsvProfile follows this format:
+ *
+ * @example
+ * {
+ *  name,
+ *  schema: ['<column name>'] : { SchemaColumnSettings },
+ * }
+ */
 export default interface CsvProfile {
 	name: string;
-	schema: Record<string, SchemaColumnSettings>;
+	schema: ProfileSchema;
 }
 
 export function generateDefaultProfileSchema(
@@ -29,6 +48,13 @@ export function generateDefaultProfileSchema(
 	}, {});
 }
 
+/**
+ * Converts a column name list into a string hash. Useful for fingerprinting
+ * csv header schemas.
+ */
 export function getSchemaHash(columns: string[]) {
-	return simpleHash(columns.join('+'));
+	return simpleHash(
+		// sort so that incoming column order shouldn't matter
+		columns.toSorted((a, b) => a.localeCompare(b)).join('+'),
+	);
 }

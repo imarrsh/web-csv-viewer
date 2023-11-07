@@ -21,10 +21,12 @@ export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
 	return store;
 };
 
+/**
+ * Combines the {@link viewerSlice} and {@link workingFilesSlice}
+ */
 export const useBoundStore = create<CombinedStore>()(
 	immer((...a) => ({
-		// ...csvProfileSlice(...a),
-		...workingFilesSlice(...a),
 		...viewerSlice(...a),
+		...workingFilesSlice(...a),
 	})),
 );
