@@ -93,6 +93,9 @@ const Form = ({ onSubmit }: FormProps) => {
 				{profileName && (
 					<div className="text-sm">Found matching profile "{profileName}"</div>
 				)}
+				{!!fileMeta && !data.length && (
+					<div className="text-sm">Couldn't read data from file</div>
+				)}
 				{/* <Settings /> */}
 				<div className="flex gap-4 justify-center pt-4">
 					<button
