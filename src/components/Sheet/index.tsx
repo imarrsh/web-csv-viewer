@@ -14,6 +14,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { CsvColumn, CsvField, CsvFile, CsvRow } from '~/data/models/csv';
+import { tw } from '~/lib/utils/alias';
+import Icon from '../Icon';
 
 const generateColumnsFromFieldList = (
 	columns: CsvColumn[],
@@ -56,6 +58,7 @@ const DraggableColumnHeader = ({
 	const { getState, setColumnOrder } = table;
 	const { columnOrder } = getState();
 	const { column } = header;
+	const [grabbing, setGrabbing] = useState(false);
 
 	const [, dropRef] = useDrop({
 		accept: 'column',
@@ -83,11 +86,25 @@ const DraggableColumnHeader = ({
 			colSpan={header.colSpan}
 			style={{ opacity: isDragging ? 0.5 : 1 }}
 		>
-			<div className="flex gap-2 p-2 whitespace-nowrap" ref={previewRef}>
+			<div
+				className="flex gap-2 items-center p-2 whitespace-nowrap"
+				ref={previewRef}
+			>
 				{header.isPlaceholder
 					? null
 					: flexRender(header.column.columnDef.header, header.getContext())}
-				<button ref={dragRef}>🟰</button>
+				<button
+					type="button"
+					className={tw(
+						'flex',
+						grabbing || isDragging ? 'cursor-grabbing' : 'cursor-grab',
+					)}
+					onMouseDown={() => setGrabbing(true)}
+					onMouseUp={() => setGrabbing(false)}
+					ref={dragRef}
+				>
+					<Icon name="Bars2Icon" variant="solid" />
+				</button>
 			</div>
 		</th>
 	);
@@ -97,21 +114,13 @@ interface SheetProps {
 	className?: string;
 	// columns: string[];
 	data: CsvFile;
-	onClear?: () => void;
 	onColumnOrderChange?: (state: string[]) => void;
-	onColumnVisibilityChange?: (state: VisibilityState) => void;
-	onDownload?: (data: CsvRow[], fileName?: string) => void;
-	title?: string;
 }
 
 const Sheet = ({
 	className,
 	data: { data = [], columns = [] },
-	title,
-	onClear,
 	onColumnOrderChange,
-	onColumnVisibilityChange,
-	onDownload,
 }: SheetProps) => {
 	const columns_ = useMemo(
 		() => generateColumnsFromFieldList(columns),
@@ -133,21 +142,12 @@ const Sheet = ({
 
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(
 		columns
-			.slice()
-			.sort((colA, colB) => {
+			.toSorted((colA, colB) => {
 				const result = colA.ordinal - colB.ordinal;
 				return result;
 			})
 			.map((col) => col.name), //must start out with populated columnOrder so we can splice
 	);
-
-	const handleColumnVisibilityChange = (updater: Updater<VisibilityState>) => {
-		setColumnVisibility(updater);
-
-		// @ts-expect-error - calling updater will give us the new value, but TS isn't happy about it
-		const value = updater();
-		onColumnVisibilityChange?.(value);
-	};
 
 	const handleColumnOrderChange = (state: Updater<ColumnOrderState>) => {
 		setColumnOrder(state);
@@ -162,7 +162,6 @@ const Sheet = ({
 			columnOrder,
 			columnVisibility,
 		},
-		onColumnVisibilityChange: handleColumnVisibilityChange,
 		onColumnOrderChange: handleColumnOrderChange,
 		getCoreRowModel: getCoreRowModel(),
 		// debugTable: true,
