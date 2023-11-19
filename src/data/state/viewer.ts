@@ -8,7 +8,8 @@ type FileMetaWithId = FileMeta & { fileId: string };
 export interface ViewerSliceState {
 	tabs: Record<TabId, FileMetaWithId | null>;
 	activeTabId: TabId;
-	createTab: () => void;
+	setActiveTab: (id: string) => void;
+	createTab: () => string;
 	closeTab: (id: TabId) => void;
 	setTabFile: (tabId: TabId, fileMeta: FileMetaWithId | null) => void;
 }
@@ -23,10 +24,17 @@ export const viewerSlice: StateCreator<
 		[initialTabId]: null,
 	},
 	activeTabId: initialTabId,
-	createTab: () =>
+	setActiveTab: (id: string) =>
 		set((state) => {
-			state.tabs[v4()] = null;
+			state.activeTabId = id;
 		}),
+	createTab: () => {
+		const tabId = v4();
+		set((state) => {
+			state.tabs[tabId] = null;
+		});
+		return tabId;
+	},
 	closeTab: (id) =>
 		set((state) => {
 			delete state.tabs[id];

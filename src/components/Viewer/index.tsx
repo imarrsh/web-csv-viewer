@@ -1,5 +1,5 @@
 import { Tab } from '@headlessui/react';
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import { v4 } from 'uuid';
 import Form, { SubmitData } from '~/components/Form';
 import Sheet from '~/components/Sheet';
@@ -37,25 +37,33 @@ interface ViewerProps {
 
 const Viewer = ({ className }: ViewerProps) => {
 	const {
+		activeTabId,
+		closeTab,
+		createTab,
 		files,
+		removeFile,
+		setActiveTab,
+		setColumnOrder,
 		setFile,
 		setTabFile,
-		removeFile,
-		activeTabId,
 		tabs,
-		setColumnOrder,
 	} = useBoundStore();
 
 	const { findProfileById, addProfile, profiles, updateProfileSchema } =
 		useCsvProfileStore();
 
 	const fileIds = Object.keys(files);
+	const activeTabFileId = tabs[activeTabId]?.fileId;
 
 	const handleClearTabAndFile = () => {
 		const fileId = tabs[activeTabId]?.fileId;
 		if (fileId) {
-			setTabFile(activeTabId, null);
 			removeFile(fileId);
+		}
+		if (Object.keys(tabs).length > 1) {
+			closeTab(activeTabId);
+		} else {
+			setTabFile(activeTabId, null);
 		}
 	};
 
@@ -110,44 +118,50 @@ const Viewer = ({ className }: ViewerProps) => {
 		}
 	};
 
+	const tabEntries = useMemo(() => Object.entries(tabs), [tabs]);
+
 	return (
 		<div className={tw('flex flex-col h-full', className)}>
 			<Tab.Group>
 				<Tab.Panels className="flex-grow min-h-0 overflow-y-scroll">
-					<Tab.Panel className="p-4">
-						{fileIds.length > 0 ? (
-							<Sheet
-								data={files[fileIds[0]]}
-								onClear={handleClearTabAndFile}
-								onColumnOrderChange={(columnOrderState) => {
-									setColumnOrder(fileIds[0], columnOrderState);
+					{tabEntries.map((tabEntry) => {
+						const [tabId] = tabEntry;
+						return (
+							<Tab.Panel key={tabId} className="p-4">
+								{activeTabFileId && !!files[activeTabFileId] ? (
+									<Sheet
+										data={files[activeTabFileId]}
+										onColumnOrderChange={(columnOrderState) => {
+											setColumnOrder(fileIds[0], columnOrderState);
 
-									const profileId = getSchemaHash(columnOrderState);
-									const profile = findProfileById(profileId);
+											const profileId = getSchemaHash(columnOrderState);
+											const profile = findProfileById(profileId);
 
-									if (profile) {
-										const schemaOrdinalUpdate = columnOrderState.reduce(
-											(state, column, idx) => {
-												return {
-													...state,
-													[column]: {
-														ordinal: idx,
+											if (profile) {
+												const schemaOrdinalUpdate = columnOrderState.reduce(
+													(state, column, idx) => {
+														return {
+															...state,
+															[column]: {
+																ordinal: idx,
+															},
+														};
 													},
-												};
-											},
-											{},
-										);
-										updateProfileSchema(profileId, schemaOrdinalUpdate);
-									}
-								}}
-							/>
-						) : (
-							<Form onSubmit={handleSubmit} />
-						)}
-					</Tab.Panel>
+													{},
+												);
+												updateProfileSchema(profileId, schemaOrdinalUpdate);
+											}
+										}}
+									/>
+								) : (
+									<Form onSubmit={handleSubmit} />
+								)}
+							</Tab.Panel>
+						);
+					})}
 				</Tab.Panels>
 				<Tab.List className="flex items-stretch backdrop-blur-3xl bg-opacity-80 bg-white dark:bg-slate-800 border-t border-t-slate-700">
-					{Object.entries(tabs).map((tabEntry) => {
+					{tabEntries.map((tabEntry) => {
 						const [tabId, fileMeta] = tabEntry;
 						const file = (!!fileMeta && files[fileMeta.fileId]) || undefined;
 						return (
@@ -156,10 +170,15 @@ const Viewer = ({ className }: ViewerProps) => {
 									<div
 										className={tw(
 											'flex items-center text-gray-500 dark:text-white border-white border-b-2 border-r-2 border-r-indigo-500 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700',
-											selected && 'border-t-indigo-500',
+											selected &&
+												'border-t-indigo-500 bg-slate-100 dark:bg-slate-700',
 										)}
 									>
-										<button className="px-4 py-2" type="button">
+										<button
+											className="px-4 py-2"
+											type="button"
+											onClick={() => setActiveTab(tabId)}
+										>
 											{file?.fileMeta?.name ?? 'Untitled'}{' '}
 										</button>
 										<button
@@ -178,7 +197,8 @@ const Viewer = ({ className }: ViewerProps) => {
 						type="button"
 						className="flex items-center px-4 py-2 border-r border-r-indigo-500 hover:bg-slate-100"
 						onClick={() => {
-							// todo: add new tab
+							const newTabId = createTab();
+							setActiveTab(newTabId);
 						}}
 					>
 						<Icon name="PlusIcon" />
