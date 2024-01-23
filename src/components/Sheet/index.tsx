@@ -111,14 +111,12 @@ const DraggableColumnHeader = ({
 };
 
 interface SheetProps {
-	className?: string;
 	// columns: string[];
 	data: CsvFile;
 	onColumnOrderChange?: (state: string[]) => void;
 }
 
 const Sheet = ({
-	className,
 	data: { data = [], columns = [] },
 	onColumnOrderChange,
 }: SheetProps) => {
@@ -126,15 +124,15 @@ const Sheet = ({
 		() => generateColumnsFromFieldList(columns),
 		[columns],
 	);
-	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-	const visibleCols = useMemo(
-		() =>
-			columns.reduce((acc, c) => {
-				return { ...acc, [c.name]: c.visible };
-			}, {} as VisibilityState),
-		[columns],
-	);
+	const visibleCols = useMemo(() => {
+		return columns.reduce((acc, c) => {
+			return { ...acc, [c.name]: c.visible };
+		}, {} as VisibilityState);
+	}, [columns]);
+
+	const [columnVisibility, setColumnVisibility] =
+		useState<VisibilityState>(visibleCols);
 
 	useEffect(() => {
 		setColumnVisibility(visibleCols);
